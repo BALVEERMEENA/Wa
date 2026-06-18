@@ -10,11 +10,12 @@
     <meta name="apple-mobile-web-app-title" content="WASender Pro">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
     
-    <link rel="manifest" href="/Wa/manifest.json">
-    <link rel="apple-touch-icon" href="/Wa/icons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/Wa/icons/icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/Wa/icons/icon-512.png">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
     
     <title>WASender Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -504,6 +505,44 @@
             box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
         }
         .install-card h2 { margin-bottom: 10px; padding: 0; border: 0; }
+        .install-card p { margin: 0; color: var(--text-muted); line-height: 1.55; }
+        .install-steps {
+            margin: 16px 0 0;
+            padding: 0;
+            list-style: none;
+            counter-reset: install-step;
+        }
+        .install-steps li {
+            position: relative;
+            min-height: 34px;
+            padding: 3px 0 12px 42px;
+            color: #344054;
+            line-height: 1.45;
+            counter-increment: install-step;
+        }
+        .install-steps li::before {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: grid;
+            place-items: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary-soft);
+            color: var(--primary);
+            content: counter(install-step);
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .install-note {
+            margin-top: 12px !important;
+            padding: 10px 12px;
+            border-left: 3px solid var(--amber);
+            background: #fffbeb;
+            color: #92400e !important;
+            font-size: 12.5px;
+        }
         .sheet-icon {
             display: grid;
             place-items: center;
@@ -612,7 +651,7 @@
         </nav>
         <div class="app-actions">
             <span id="pwaStatus" class="status-chip"><i data-lucide="smartphone"></i><span>Web App</span></span>
-            <button class="btn-secondary install-button" type="button" onclick="openInstallPrompt()">
+            <button id="installAppButton" class="btn-secondary install-button" type="button" onclick="openInstallPrompt()">
                 <i data-lucide="download"></i><span>Install</span>
             </button>
         </div>
@@ -852,8 +891,13 @@
         </button>
         <div class="sheet-icon" aria-hidden="true"><i data-lucide="smartphone"></i></div>
         <h2 id="installTitle"><i data-lucide="download"></i><span>Install WASender</span></h2>
-        <p id="installHelpText">On iPhone, open this page in Safari, tap Share, then choose Add to Home Screen.</p>
+        <p id="installHelpText">Add WASender to your Home Screen for an app-like experience.</p>
+        <ol id="installSteps" class="install-steps"></ol>
+        <p id="installNote" class="install-note" hidden></p>
         <div class="controls-row" style="margin-top:14px;">
+            <button id="copyInstallLinkButton" class="btn-gray" type="button" onclick="copyInstallLink()" hidden>
+                <i data-lucide="copy"></i><span>Copy Link</span>
+            </button>
             <button class="btn-secondary" type="button" onclick="closeInstallHelp()"><i data-lucide="check"></i><span>Done</span></button>
         </div>
     </div>
@@ -1368,16 +1412,63 @@
         const chip = document.getElementById('pwaStatus'); if (chip) chip.innerHTML = `<i data-lucide="${ico || 'smartphone'}"></i><span>${lbl}</span>`; refreshAppIcons();
     }
 
+    function getInstallEnvironment() {
+        const ua = window.navigator.userAgent || '';
+        const isIos = /iphone|ipad|ipod/i.test(ua) || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+        const isIosSafari = isIos && /safari/i.test(ua) && !/crios|fxios|edgios|opios|duckduckgo|instagram|fbav|fban|whatsapp|github/i.test(ua);
+        const isInAppBrowser = /instagram|fbav|fban|whatsapp|github|linkedin|line\//i.test(ua);
+        return { isIos, isIosSafari, isInAppBrowser };
+    }
+
+    function renderInstallHelp() {
+        const environment = getInstallEnvironment();
+        const helpText = document.getElementById('installHelpText');
+        const steps = document.getElementById('installSteps');
+        const note = document.getElementById('installNote');
+        const copyButton = document.getElementById('copyInstallLinkButton');
+        let instructions = [];
+
+        note.hidden = true;
+        copyButton.hidden = true;
+
+        if (environment.isIos) {
+            helpText.innerText = 'iPhone installation is completed from the browser Share menu.';
+            if (!environment.isIosSafari || environment.isInAppBrowser) {
+                instructions = ['Open this page in Safari.', 'Tap More, then Share, or tap the Share button directly.', 'Choose Add to Home Screen.', 'Turn on Open as Web App, then tap Add.'];
+                note.innerText = 'If this link opened inside WhatsApp, GitHub, Instagram, or another app, use its menu to open the page in Safari. You can also copy the link below.';
+                note.hidden = false;
+                copyButton.hidden = false;
+            } else {
+                instructions = ['Tap More, then Share, or tap the Share button directly.', 'Scroll and choose Add to Home Screen.', 'Turn on Open as Web App.', 'Confirm the name, then tap Add.'];
+            }
+        } else {
+            helpText.innerText = 'Install WASender as an app from your browser.';
+            instructions = ['Open the browser menu.', 'Choose Install app or Add to Home screen.', 'Confirm the installation.'];
+        }
+
+        steps.innerHTML = instructions.map(item => `<li>${item}</li>`).join('');
+    }
+
     function openInstallPrompt() {
         if (deferredInstallPrompt) { deferredInstallPrompt.prompt(); return; }
-        document.getElementById('installHelpText').innerText = /iphone|ipad|ipod/i.test(window.navigator.userAgent) ? 'On iPhone, open this in Safari, tap Share, then choose "Add to Home Screen".' : 'Use your browser options layout menu to build standalone properties.';
+        renderInstallHelp();
         document.getElementById('installSheet').hidden = false; refreshAppIcons();
     }
     function closeInstallHelp() { document.getElementById('installSheet').hidden = true; }
+    async function copyInstallLink() {
+        const buttonLabel = document.querySelector('#copyInstallLinkButton span');
+        try {
+            await window.navigator.clipboard.writeText(window.location.href);
+            buttonLabel.innerText = 'Link Copied';
+        } catch (error) {
+            window.prompt('Copy this link and open it in Safari:', window.location.href);
+        }
+    }
 
     function registerPwaServiceWorker() {
       if (isRunningStandalone()) {
         setPwaStatus("Installed", "badge-check");
+        document.getElementById('installAppButton').hidden = true;
         return;
       }
 
@@ -1386,8 +1477,11 @@
         return;
       }
 
-      navigator.serviceWorker.register("/Wa/sw.js", { scope: "/Wa/" })
-        .then(() => setPwaStatus("App Ready", "badge-check"))
+      navigator.serviceWorker.register("./sw.js", { scope: "./" })
+        .then(registration => {
+          registration.update();
+          setPwaStatus("App Ready", "badge-check");
+        })
         .catch(err => {
           console.error("Service worker failed:", err);
           setPwaStatus("Web App", "smartphone");
