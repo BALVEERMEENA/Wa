@@ -1,0 +1,21 @@
+{
+  "name": "WASender Pro",
+  "short_name": "WASender",
+  "start_url": "/Wa/index.html",
+  "scope": "/Wa/",
+  "display": "standalone",
+  "background_color": "#EEF2F7",
+  "theme_color": "#075E54",
+  "icons": [
+    {
+      "src": "/Wa/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/Wa/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
