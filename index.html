@@ -252,6 +252,43 @@
         .filebox:hover { border-color: var(--primary); background: #f0fdf4; transform: translateY(-1px); }
         .filebox strong { font-size: 15px; }
         .filebox input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .attachment-picker {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .attachment-picker input[type="file"] {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .attachment-select-button {
+            min-height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            background: #475467;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .attachment-select-button svg { width: 17px; height: 17px; }
+        .attachment-status {
+            min-width: 0;
+            margin-top: 5px;
+            color: var(--text-muted);
+            font-size: 11.5px;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+        .attachment-status.ready { color: #166534; font-weight: 800; }
 
         .tags-wrapper {
             display: flex;
@@ -482,6 +519,15 @@
             background: #eff6ff;
             box-shadow: 0 8px 22px rgba(37, 99, 235, 0.10);
         }
+        .auto-focus-header {
+            min-width: min(420px, 100%);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            flex: 1 1 420px;
+        }
+        .queue-more-button { display: none; }
         body:not([data-active-view="executionSection"]) .auto-banner { display: none !important; }
         .auto-info h4 { margin: 0 0 5px; color: #1e40af; font-size: 15px; }
         .auto-info div { color: #344054; font-size: 13px; }
@@ -595,6 +641,86 @@
             .controls-row button,
             .controls-row .send { width: 100%; max-width: none !important; }
             .auto-banner { position: static; }
+            .queue-more-button {
+                width: auto !important;
+                min-width: 92px;
+                flex: 0 0 auto;
+                display: inline-flex;
+                background: #ffffff;
+                color: #344054;
+                border: 1px solid #cbd5e1;
+                box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+            }
+
+            body[data-active-view="executionSection"]:not(.queue-more-open) {
+                min-height: 100dvh;
+                overflow-x: hidden;
+                overflow-y: auto;
+                background: #eff6ff;
+            }
+            body[data-active-view="executionSection"]:not(.queue-more-open) .app-topbar,
+            body[data-active-view="executionSection"]:not(.queue-more-open) #executionSection {
+                display: none !important;
+            }
+            body[data-active-view="executionSection"]:not(.queue-more-open) .app-shell,
+            body[data-active-view="executionSection"]:not(.queue-more-open) .dashboard {
+                min-height: 100dvh;
+            }
+            body[data-active-view="executionSection"]:not(.queue-more-open) .dashboard {
+                width: 100%;
+                padding: 0;
+                gap: 0;
+            }
+            body[data-active-view="executionSection"]:not(.queue-more-open) .auto-banner {
+                min-height: 100dvh;
+                width: 100%;
+                margin: 0;
+                padding:
+                    max(20px, env(safe-area-inset-top))
+                    18px
+                    max(22px, env(safe-area-inset-bottom));
+                border: 0;
+                border-radius: 0;
+                box-shadow: none;
+                display: flex !important;
+                flex-direction: column;
+                align-items: stretch;
+                justify-content: space-between;
+                flex-wrap: nowrap;
+            }
+            body[data-active-view="executionSection"]:not(.queue-more-open) .auto-focus-header {
+                min-width: 0;
+                width: 100%;
+                flex: 0 0 auto;
+            }
+            body[data-active-view="executionSection"]:not(.queue-more-open) .auto-info {
+                min-width: 0;
+                padding-top: 4px;
+            }
+            body[data-active-view="executionSection"]:not(.queue-more-open) .auto-info h4 {
+                font-size: 22px;
+                line-height: 1.2;
+            }
+            body[data-active-view="executionSection"]:not(.queue-more-open) .auto-info div {
+                margin-top: 8px;
+                font-size: 15px;
+                line-height: 1.5;
+                overflow-wrap: anywhere;
+            }
+            body[data-active-view="executionSection"]:not(.queue-more-open) .auto-banner > .controls-row {
+                width: 100%;
+                margin-top: 28px;
+                gap: 12px;
+            }
+            body[data-active-view="executionSection"]:not(.queue-more-open) .auto-banner > .controls-row > * {
+                width: 100% !important;
+                min-height: 56px;
+                padding: 12px 16px !important;
+                font-size: 16px !important;
+            }
+            body[data-active-view="executionSection"].queue-more-open {
+                overflow: auto;
+            }
 
             .table-container { overflow: visible; border: 0; background: transparent; }
             table,
@@ -679,8 +805,18 @@
                 <input type="text" id="globalCC" value="91" oninput="syncSendQueue(); saveSessionState();">
             </div>
             <div>
-                        <h3>Attachment Reminder</h3>
-                <input type="text" id="attachmentName" placeholder="e.g., Brochure.pdf, OfferLetter.pdf" oninput="syncSendQueue(); saveSessionState();">
+                <h3>Attachment</h3>
+                <div class="attachment-picker">
+                    <input id="attachmentFile" type="file" onchange="handleAttachmentSelection(event)">
+                    <label class="attachment-select-button" for="attachmentFile">
+                        <i data-lucide="paperclip"></i><span>Choose File</span>
+                    </label>
+                    <button id="clearAttachmentButton" class="btn-gray" type="button" onclick="clearSelectedAttachment()" hidden title="Remove attachment">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <input type="hidden" id="attachmentName">
+                <div id="attachmentStatus" class="attachment-status">No file selected</div>
             </div>
         </div>
 
@@ -819,12 +955,20 @@
     </div>
 
     <div id="automationPanel" class="auto-banner" style="display:none;">
-        <div class="auto-info">
-            <h4 id="autoContactTitle">Next contact</h4>
-            <div id="autoMessagePreview">No pending contacts match the current filters.</div>
+        <div class="auto-focus-header">
+            <div class="auto-info">
+                <h4 id="autoContactTitle">Next contact</h4>
+                <div id="autoMessagePreview">No pending contacts match the current filters.</div>
+            </div>
+            <button id="queueMoreButton" class="queue-more-button" type="button" onclick="toggleQueueMore()" aria-expanded="false">
+                <i data-lucide="ellipsis"></i><span>More</span>
+            </button>
         </div>
         <div class="controls-row">
             <a id="autoLaunchAnchor" class="send" style="text-decoration:none; padding:10px 18px; width:auto; font-size:14.5px;" href="#" target="_blank"><i data-lucide="send"></i><span>Launch Next</span></a>
+            <button id="autoAttachmentButton" class="btn-amber" type="button" onclick="shareAttachmentForRow(targetPendingLocatorPointer)" hidden>
+                <i data-lucide="paperclip"></i><span>Share File</span>
+            </button>
             <button class="btn-primary" style="background-color:#166534; color:#ffffff;" onclick="patchNextActiveAutomationRecordState('sent')"><i data-lucide="check"></i><span>Sent</span></button>
             <button class="btn-danger" onclick="patchNextActiveAutomationRecordState('failed')"><i data-lucide="x"></i><span>Fail</span></button>
             <button class="btn-gray" onclick="patchNextActiveAutomationRecordState('skipped')"><i data-lucide="skip-forward"></i><span>Skip</span></button>
@@ -908,6 +1052,7 @@
     let completeDatasetCollection = [];
     let targetPendingLocatorPointer = -1;
     let deferredInstallPrompt = null;
+    let selectedAttachmentFile = null;
     const appViewOrder = ['configSection', 'builderSection', 'summarySection', 'executionSection'];
 
     function hasWorkspaceData() { return completeDatasetCollection.length > 0; }
@@ -939,8 +1084,25 @@
             section.hidden = !isActive;
             section.classList.toggle('active-view', isActive);
         });
+        setQueueMoreOpen(false);
         updateStepNavigationState();
         refreshAppIcons();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setQueueMoreOpen(shouldOpen) {
+        document.body.classList.toggle('queue-more-open', Boolean(shouldOpen));
+        const moreButton = document.getElementById('queueMoreButton');
+        if (!moreButton) return;
+        moreButton.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+        moreButton.innerHTML = shouldOpen
+            ? '<i data-lucide="minimize-2"></i><span>Focus View</span>'
+            : '<i data-lucide="ellipsis"></i><span>More</span>';
+        refreshAppIcons();
+    }
+
+    function toggleQueueMore() {
+        setQueueMoreOpen(!document.body.classList.contains('queue-more-open'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -1034,6 +1196,98 @@
         if (targetPlatformEnvironment === 'web') return `https://web.whatsapp.com/send?phone=${totalDestinationPhoneString}&text=${URLSafeMessageEncodedString}`;
         if (targetPlatformEnvironment === 'api') return `https://api.whatsapp.com/send?phone=${totalDestinationPhoneString}&text=${URLSafeMessageEncodedString}`;
         return `whatsapp://send?phone=${totalDestinationPhoneString}&text=${URLSafeMessageEncodedString}`;
+    }
+
+    function formatFileSize(byteCount) {
+        if (!Number.isFinite(byteCount) || byteCount <= 0) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        const unitIndex = Math.min(Math.floor(Math.log(byteCount) / Math.log(1024)), units.length - 1);
+        const sizeValue = byteCount / Math.pow(1024, unitIndex);
+        return `${sizeValue.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+    }
+
+    function browserCanShareSelectedFile() {
+        if (!selectedAttachmentFile || typeof navigator.share !== 'function') return false;
+        if (typeof navigator.canShare !== 'function') return true;
+        try { return navigator.canShare({ files: [selectedAttachmentFile] }); }
+        catch (error) { return false; }
+    }
+
+    function updateAttachmentSelectionUI(restoredFileName) {
+        const fileName = selectedAttachmentFile ? selectedAttachmentFile.name : (restoredFileName || '');
+        const status = document.getElementById('attachmentStatus');
+        const clearButton = document.getElementById('clearAttachmentButton');
+        const hiddenName = document.getElementById('attachmentName');
+        hiddenName.value = fileName;
+        clearButton.hidden = !fileName;
+        status.classList.toggle('ready', Boolean(selectedAttachmentFile));
+
+        if (selectedAttachmentFile) {
+            const shareMode = browserCanShareSelectedFile() ? 'Ready for phone sharing' : 'Selected; attach manually if native sharing is unavailable';
+            status.innerText = `${fileName} (${formatFileSize(selectedAttachmentFile.size)}) - ${shareMode}`;
+        } else if (fileName) {
+            status.innerText = `${fileName} - choose this file again after restoring the session`;
+        } else {
+            status.innerText = 'No file selected';
+        }
+    }
+
+    function handleAttachmentSelection(event) {
+        selectedAttachmentFile = event.target.files && event.target.files[0] ? event.target.files[0] : null;
+        updateAttachmentSelectionUI();
+        syncSendQueue();
+        saveSessionState();
+    }
+
+    function clearSelectedAttachment() {
+        selectedAttachmentFile = null;
+        document.getElementById('attachmentFile').value = '';
+        updateAttachmentSelectionUI();
+        syncSendQueue();
+        saveSessionState();
+    }
+
+    async function copyMessageForManualAttachment(messageText) {
+        try {
+            await navigator.clipboard.writeText(messageText);
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    async function shareAttachmentForRow(index) {
+        if (!selectedAttachmentFile) {
+            alert('Choose an attachment in Campaign Setup first.');
+            showAppView('configSection');
+            return;
+        }
+        if (index < 0 || !completeDatasetCollection[index]) return;
+
+        const targetRow = completeDatasetCollection[index];
+        const messageText = compilePersonalizedTemplateCopy(targetRow);
+        const sharePayload = {
+            files: [selectedAttachmentFile],
+            title: selectedAttachmentFile.name,
+            text: messageText
+        };
+
+        if (browserCanShareSelectedFile()) {
+            try {
+                await navigator.share(sharePayload);
+                updateQueueRowStatus(index, 'opened');
+                return;
+            } catch (error) {
+                if (error && error.name === 'AbortError') return;
+                console.warn('Native attachment sharing failed:', error);
+            }
+        }
+
+        const phoneColKey = document.getElementById('colPhone').value;
+        const messageCopied = await copyMessageForManualAttachment(messageText);
+        updateQueueRowStatus(index, 'opened');
+        alert(`${messageCopied ? 'The message was copied.' : 'WhatsApp will open.'} Tap the paperclip in WhatsApp and select "${selectedAttachmentFile.name}".`);
+        window.location.href = generateTargetRoutingUrl(formatCleanPhoneField(targetRow[phoneColKey]), messageText);
     }
 
     function ingestSourceDataWorkbook(event) {
@@ -1263,8 +1517,12 @@
 
             let actionAreaLayoutTemplate = '';
             if (row.__isValidFormatStructure && !row.__isDuplicateFlagged) {
+                const attachmentAction = selectedAttachmentFile
+                    ? `<button class="btn-amber" type="button" style="width:100%; margin-top:6px;" onclick="shareAttachmentForRow(${idx})"><i data-lucide="paperclip"></i><span>Share File + Message</span></button>`
+                    : '';
                 actionAreaLayoutTemplate = `
-                    <a class="send" href="${generateTargetRoutingUrl(basePhone, rowCompiledMessage)}" target="_blank" onclick="return prepareQueueRowSendLink(${idx}, this)"><i data-lucide="send"></i><span>Send</span></a>
+                    <a class="send" href="${generateTargetRoutingUrl(basePhone, rowCompiledMessage)}" target="_blank" onclick="return prepareQueueRowSendLink(${idx}, this)"><i data-lucide="send"></i><span>Send Message</span></a>
+                    ${attachmentAction}
                     <div class="controls-row" style="margin-top:8px; justify-content:center; gap:4px;">
                         <button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="updateQueueRowStatus(${idx},'sent')"><i data-lucide="check"></i><span>Sent</span></button>
                         <button class="btn-danger" style="padding:4px 8px; font-size:11px;" onclick="updateQueueRowStatus(${idx},'failed')"><i data-lucide="x"></i><span>Fail</span></button>
@@ -1309,15 +1567,18 @@
             document.getElementById('autoContactTitle').innerHTML = `<b>Next: Row #${targetPendingLocatorPointer + 1}</b> - ${phone} (${name})`;
             document.getElementById('autoMessagePreview').innerText = calculatedMsg;
             const continuousLaunchAnchor = document.getElementById('autoLaunchAnchor');
+            const attachmentButton = document.getElementById('autoAttachmentButton');
             continuousLaunchAnchor.href = generateTargetRoutingUrl(phone, calculatedMsg);
             continuousLaunchAnchor.style.pointerEvents = ''; continuousLaunchAnchor.style.background = '';
             continuousLaunchAnchor.onclick = function() { updateQueueRowStatus(targetPendingLocatorPointer, 'opened'); };
+            attachmentButton.hidden = !selectedAttachmentFile;
         } else if (completeDatasetCollection.length > 0) {
             bannerPanel.style.display = 'flex';
             document.getElementById('autoContactTitle').innerHTML = "<b>Campaign complete</b>";
             document.getElementById('autoMessagePreview').innerText = "All rows processed.";
             document.getElementById('autoLaunchAnchor').style.pointerEvents = 'none';
             document.getElementById('autoLaunchAnchor').style.background = '#cbd5e1';
+            document.getElementById('autoAttachmentButton').hidden = true;
         } else { bannerPanel.style.display = 'none'; }
     }
 
@@ -1377,7 +1638,9 @@
             const stateData = JSON.parse(compiledRawJson);
             columnHeaderFields = stateData.columnHeaderFields; completeDatasetCollection = stateData.completeDatasetCollection;
             document.getElementById('campaignName').value = stateData.campaignName; document.getElementById('globalCC').value = stateData.globalCC;
-            document.getElementById('platform').value = stateData.platform; document.getElementById('attachmentName').value = stateData.attachmentName;
+            document.getElementById('platform').value = stateData.platform;
+            selectedAttachmentFile = null;
+            updateAttachmentSelectionUI(stateData.attachmentName || '');
             document.getElementById('duplicateStrategy').value = stateData.duplicateStrategy; document.getElementById('importFilterQuery').value = stateData.importFilterQuery;
             initializeMappingWorkspacePanels();
             document.getElementById('templateMode').value = stateData.templateMode; document.getElementById('templateText').value = stateData.templateText;
@@ -1493,7 +1756,7 @@
     window.addEventListener('keydown', e => { if (e.key === 'Escape') closeInstallHelp(); });
 
     window.onload = function() {
-        checkActiveSessionRecoveryState(); showAppView('configSection'); updateStepNavigationState(); updateSetupMessagePreview(); refreshAppIcons(); registerPwaServiceWorker();
+        checkActiveSessionRecoveryState(); showAppView('configSection'); updateStepNavigationState(); updateSetupMessagePreview(); updateAttachmentSelectionUI(); refreshAppIcons(); registerPwaServiceWorker();
     };
 </script>
 </body>

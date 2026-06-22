@@ -1,4 +1,4 @@
-const CACHE_NAME = "wasender-pro-v2";
+const CACHE_NAME = "wasender-pro-v4";
 const APP_URL = new URL("./", self.location.href);
 const APP_SHELL = [
   "./",
